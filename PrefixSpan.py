@@ -7,42 +7,47 @@ import sys
 	
 class PrefixSpan:
 
-	PLACE_HOLDER = '_'
+	def __init__(self, sequences, minSupport=0.1, maxPatternLength=10):
 
-	def train(self, sequences, minSupport=0.1, maxPatternLength=10):
 		minSupport = minSupport * len(sequences)
+		self.PLACE_HOLDER = '_'
 
-		freqSequences = self.prefixSpan(
-			self.SequencePattern([], None, maxPatternLength), 
+		freqSequences = self._prefixSpan(
+			self.SequencePattern([], None, maxPatternLength, self.PLACE_HOLDER), 
 			sequences, minSupport, maxPatternLength)
 
-		self.freqSequences = self.FreqSequences(freqSequences)
+		self.freqSeqs = PrefixSpan.FreqSequences(freqSequences)
+
+	@staticmethod
+	def train(sequences, minSupport=0.1, maxPatternLength=10):
+		return PrefixSpan(sequences, minSupport, maxPatternLength)
 
 	def freqSequences(self):
-		return freqSequences
+		return self.freqSeqs
 
-	class FreqSequence:
+	class FreqSequences:
 		def __init__(self, fs):
 			self.fs = fs
 		def collect(self):
 			return self.fs
 
 	class SequencePattern:
-		def __init__(self, sequence, support, maxPatternLength):
+		def __init__(self, sequence, support, maxPatternLength, place_holder):
+                        self.place_holder = place_holder
 			self.sequence = []
 			for s in sequence:
 				self.sequence.append(list(s))
 			self.freq = support
 
 		def append(self, p):
-			if p.sequence[0][0] == PLACE_HOLDER:
+			if p.sequence[0][0] == self.place_holder:
 				first_e = p.sequence[0]
-				first_e.remove(PLACE_HOLDER)
+				first_e.remove(self.place_holder)
 				self.sequence[-1].extend(first_e)
 				self.sequence.extend(p.sequence[1:])
 			else:
 				self.sequence.extend(p.sequence)
-				if self.freq in None:
+				if self.freq is None:
 					self.freq = p.freq
 			self.freq = min(self.freq, p.freq)
 
@@ -61,7 +66,7 @@ class PrefixSpan:
 			f_list = self._frequent_items(S, pattern, threshold, maxPatternLength)
 
 			for i in f_list:
-				p = self.SequencePattern(pattern.sequence, pattern.freq, maxPatternLength)
+				p = self.SequencePattern(pattern.sequence, pattern.freq, maxPatternLength, self.PLACE_HOLDER)
 				p.append(i)
 				if self._checkPatternLengths(pattern, maxPatternLength):
 					patterns.append(p)
@@ -102,7 +107,7 @@ class PrefixSpan:
 							_items[item] = 1
 
 			#class 2
-			if PLACE_HOLDER in s[0]:
+			if self.PLACE_HOLDER in s[0]:
 				for item in s[0][1:]:
 					if item in _items:
 						_items[item] += 1
@@ -121,10 +126,10 @@ class PrefixSpan:
 						else:
 							items[item] = 1
 
-		f_list.extend([self.SequencePattern([[PLACE_HOLDER, k]], v, maxPatternLength)
+		f_list.extend([self.SequencePattern([[self.PLACE_HOLDER, k]], v, maxPatternLength, self.PLACE_HOLDER)
 				   for k, v in _items.iteritems()
 				   if v >= threshold])
-		f_list.extend([self.SequencePattern([[k]], v, maxPatternLength)
+		f_list.extend([self.SequencePattern([[k]], v, maxPatternLength, self.PLACE_HOLDER)
 				   for k, v in items.iteritems()
 				   if v >= threshold])
 		
@@ -148,7 +153,7 @@ class PrefixSpan:
 			p_s = []
 			for element in s:
 				is_prefix = False
-				if PLACE_HOLDER in element:
+				if self.PLACE_HOLDER in element:
 					if last_item in element and len(pattern.sequence[-1]) > 1:
 						is_prefix = True
 				else:
@@ -167,7 +172,7 @@ class PrefixSpan:
 						p_s = s[e_index:]
 						index = element.index(last_item)
 						e = element[i_index:]
-						e[0] = PLACE_HOLDER
+						e[0] = self.PLACE_HOLDER
 						p_s[0] = e
 					break
 			if len(p_s) != 0:
