@@ -3,8 +3,6 @@
 #author: Tianming Lu
 #adapted by: Nicolas Rangeon
 
-import sys
-	
 class PrefixSpan:
 
 	def __init__(self, sequences, minSupport=0.1, maxPatternLength=10):
